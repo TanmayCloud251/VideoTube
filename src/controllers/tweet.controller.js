@@ -7,19 +7,51 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 
 const createTweet = asyncHandler(async (req, res) => {
     //TODO: create tweet
+    const { content } = req.body
+    if(!content) {
+        throw new ApiError(400, "Content is required")
+    }
+    const tweet = await Tweet.create({
+        content,
+        owner: req.user._id
+    })
+    return res.status(201).json(new ApiResponse(true, tweet, "Tweet created successfully"))
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
+    const { userId } = req.params
+    
+    const tweets = await Tweet.find({ owner: userId })
+    return res.status(200).json(new ApiResponse(true, tweets, "User tweets retrieved successfully"))
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
     //TODO: update tweet
+    const { tweetId } = req.params
+    const { content } = req.body
+    if(!content) {
+        throw new ApiError(400, "Content is required")
+    }
+    const tweet = await Tweet.findByIdAndUpdate(tweetId, {
+        content
+    }, { new: true })
+    if(!tweet) {
+        throw new ApiError(404, "Tweet not found")
+    }
+    return res.status(200).json(new ApiResponse(true, tweet, "Tweet updated successfully"))
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
     //TODO: delete tweet
+    const { tweetId } = req.params
+    const tweet = await Tweet.findByIdAndDelete(tweetId)
+    if(!tweet) {
+        throw new ApiError(404, "Tweet not found")
+    }
+    return res.status(200).json(new ApiResponse(true, {}, "Tweet deleted successfully"))
 })
+
 
 export {
     createTweet,
