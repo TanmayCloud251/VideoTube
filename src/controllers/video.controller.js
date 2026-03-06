@@ -54,13 +54,52 @@ const getVideoById = asyncHandler(async (req, res) => {
 const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
+    const video = await Video.findById(videoId)
+    if(!video) {
+        throw new ApiError(404, "Video not found")
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to update this video")
+    }
+
+    const { title, description } = req.body
+
+    if(title) video.title = title
+    if(description) video.description = description
+
+    if(req.files?.thumbnail){
+        const thumbnailPath = req.files.thumbnail[0].path
+        const thumbnailUpload = await uploadOnCloudinary(thumbnailPath)
+        video.thumbnail = thumbnailUpload?.secure_url
+    }
+
+    return res.status(200).json({
+      success: true,
+      message: "Video updated successfully",
+      data: video
+    });
+
 
 })
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: delete video
+    const video = await Video.findById(videoId)
+    if(!video) {
+        throw new ApiError(404, "Video not found")
+    }
+    
+    if(video.owner.toString() !== req.user._id.toString()) {
+        throw new ApiError(403, "You are not authorized to delete this video")
+    }
+
+    await Video.findByIdAndDelete(videoId)
+
+    return res.status(200).json(new ApiResponse(200, {}, "Video deleted successfully"))
 })
+
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
