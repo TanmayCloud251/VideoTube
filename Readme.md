@@ -144,7 +144,7 @@ videotube-backend
 Clone the repository
 
 ```
-git clone https://github.com/YOUR_USERNAME/videotube-backend.git
+git clone https://github.com/YOUR_USERNAME/videotube.git
 ```
 
 Move into project
