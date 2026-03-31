@@ -11,17 +11,17 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video ID")
     }
 
-    const user = req.user._id
+    const userId = req.user._id
 
-    const existingLike = await Like.findOne({user, video: videoId})
+    const existingLike = await Like.findOne({likedBy: userId, video: videoId})
     
     if(existingLike) {
-        await existingLike.remove()
-        return res.json(new ApiResponse(true, "Video unliked"))
+        await Like.findByIdAndDelete(existingLike._id)
+        return res.json(new ApiResponse(200, {}, "Video unliked"))
     }
 
-    const newLike = await Like.create({user, video: videoId})
-    res.json(new ApiResponse(true, "Video liked", newLike))
+    const newLike = await Like.create({likedBy: userId, video: videoId})
+    res.json(new ApiResponse(200, newLike, "Video liked"))
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
@@ -31,17 +31,17 @@ const toggleCommentLike = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid comment ID")
     }
 
-    const user = req.user._id
+    const userId = req.user._id
 
-    const existingLike = await Like.findOne({user, comment: commentId})
+    const existingLike = await Like.findOne({likedBy: userId, comment: commentId})
 
     if(existingLike) {
-        await existingLike.remove()
-        return res.json(new ApiResponse(true, "Comment unliked"))
+        await Like.findByIdAndDelete(existingLike._id)
+        return res.json(new ApiResponse(200, {}, "Comment unliked"))
     }
 
-    const newLike = await Like.create({user, comment: commentId})
-    res.json(new ApiResponse(true, "Comment liked", newLike))
+    const newLike = await Like.create({likedBy: userId, comment: commentId})
+    res.json(new ApiResponse(200, newLike, "Comment liked"))
 
 })
 
@@ -52,29 +52,29 @@ const toggleTweetLike = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid tweet ID")
     }
 
-    const user = req.user._id
+    const userId = req.user._id
 
-    const existingLike = await Like.findOne({user, tweet: tweetId})
+    const existingLike = await Like.findOne({likedBy: userId, tweet: tweetId})
 
     if(existingLike) {
-        await existingLike.remove()
-        return res.json(new ApiResponse(true, "Tweet unliked"))
+        await Like.findByIdAndDelete(existingLike._id)
+        return res.json(new ApiResponse(200, {}, "Tweet unliked"))
     }
 
-    const newLike = await Like.create({user, tweet: tweetId})
-    res.json(new ApiResponse(true, "Tweet liked", newLike))
+    const newLike = await Like.create({likedBy: userId, tweet: tweetId})
+    res.json(new ApiResponse(200, newLike, "Tweet liked"))
 
 }
 ) 
 
 const getLikedVideos = asyncHandler(async (req, res) => {
     //TODO: get all liked videos
-    const user = req.user._id
+    const userId = req.user._id
 
     const likedVideos = await Like.aggregate([
         {
             $match: {
-                likedBy: mongoose.Types.ObjectId(user),
+                likedBy: new mongoose.Types.ObjectId(userId),
                 video: {$ne: null}
             }
         },
@@ -83,11 +83,33 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                 from: "videos",
                 localField: "video",
                 foreignField: "_id",
-                as: "videoDetails"
+                as: "video",
+                pipeline: [
+                    {
+                        $lookup: {
+                            from: "users",
+                            localField: "owner",
+                            foreignField: "_id",
+                            as: "ownerDetails",
+                            pipeline: [
+                                {
+                                    $project: {
+                                        fullName: 1,
+                                        username: 1,
+                                        avatar: 1
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        $unwind: "$ownerDetails"
+                    }
+                ]
             }
         },
         {
-            $unwind: "$videoDetails"
+            $unwind: "$video"
         },
         {
             $sort: {
@@ -95,7 +117,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
             }
         },
     ])
-    res.json(new ApiResponse(true, "Liked videos fetched", likedVideos))
+    res.json(new ApiResponse(200, likedVideos, "Liked videos fetched"))
 })
 
 export {

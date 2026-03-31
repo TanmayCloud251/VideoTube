@@ -1,12 +1,20 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import {ApiError} from "./utils/ApiError.js"
 
 const app = express()
 
+app.use((req, res, next) => {
+    console.log(`${req.method} ${req.url}`);
+    next();
+});
+
 app.use(cors({
-    origin: process.env.CORS_ORIGIN,
-    credentials: true
+    origin: "http://localhost:3000",
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"]
 }))
 
 app.use(express.json({limit: "16kb"}))
@@ -36,6 +44,28 @@ app.use("/api/v1/comments", commentRouter)
 app.use("/api/v1/likes", likeRouter)
 app.use("/api/v1/playlist", playlistRouter)
 app.use("/api/v1/dashboard", dashboardRouter)
+
+// error handling middleware
+app.use((err, req, res, next) => {
+    console.error("Error handler caught:", err);
+    
+    if (err instanceof ApiError) {
+        return res.status(err.statusCode).json({
+            success: false,
+            message: err.message,
+            errors: err.errors,
+            data: null
+        })
+    }
+    
+    // Fallback for unexpected errors
+    return res.status(err.statusCode || 500).json({
+        success: false,
+        message: err.message || "Internal Server Error",
+        errors: [err.message],
+        data: null
+    })
+})
 
 // http://localhost:8000/api/v1/users/register
 

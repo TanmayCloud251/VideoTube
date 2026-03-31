@@ -24,10 +24,10 @@ const toggleSubscription = asyncHandler(async (req, res) => {
     
     if (existingSubscription) {
         await Subscription.deleteOne({ subscriber: subscriberId, channel: channelId })
-        res.json(new ApiResponse(200, "Unsubscribed successfully"))
+        res.json(new ApiResponse(200, {}, "Unsubscribed successfully"))
     } else {
         const newSubscription = await Subscription.create({ subscriber: subscriberId, channel: channelId })
-        res.json(new ApiResponse(201, "Subscribed successfully", newSubscription))
+        res.json(new ApiResponse(201, newSubscription, "Subscribed successfully"))
     }
     
 
@@ -47,7 +47,7 @@ const getUserChannelSubscribers = asyncHandler(async (req, res) => {
         throw new ApiError(404, "No subscribers found for this channel")
     }
 
-    res.json(new ApiResponse(200, "Subscribers fetched successfully", subscribers))
+    res.json(new ApiResponse(200, subscribers, "Subscribers fetched successfully"))
 
 
 })
@@ -65,7 +65,7 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
         throw new ApiError(404, "No subscribed channels found for this user")
     }
 
-    res.json(new ApiResponse(200, "Subscribed channels fetched successfully", channels))
+    res.json(new ApiResponse(200, channels, "Subscribed channels fetched successfully"))
 
 })
 

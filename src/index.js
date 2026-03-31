@@ -2,15 +2,19 @@ import dotenv from "dotenv"
 import connectDB from "./db/index.js";
 import {app} from './app.js'
 dotenv.config({
-    path: '../.env'
+    path: './.env'
 })
-
-
 
 connectDB()
 .then(() => {
-    app.listen(process.env.PORT || 8000, () => {
-        console.log(`⚙️ Server is running at port : ${process.env.PORT}`);
+    console.log("Environment Variables Loaded:");
+    console.log("- PORT:", process.env.PORT);
+    console.log("- MONGODB_URI:", process.env.MONGODB_URI ? "Defined" : "Undefined");
+    console.log("- CLOUDINARY_CLOUD_NAME:", process.env.CLOUDINARY_CLOUD_NAME ? "Defined" : "Undefined");
+    
+    const port = process.env.PORT || 8000;
+    app.listen(port, () => {
+        console.log(`⚙️ Server is running at port : ${port}`);
     })
 })
 .catch((err) => {

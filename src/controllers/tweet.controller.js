@@ -15,7 +15,7 @@ const createTweet = asyncHandler(async (req, res) => {
         content,
         owner: req.user._id
     })
-    return res.status(201).json(new ApiResponse(true, tweet, "Tweet created successfully"))
+    return res.status(201).json(new ApiResponse(201, tweet, "Tweet created successfully"))
 })
 
 const getUserTweets = asyncHandler(async (req, res) => {
@@ -23,7 +23,7 @@ const getUserTweets = asyncHandler(async (req, res) => {
     const { userId } = req.params
     
     const tweets = await Tweet.find({ owner: userId })
-    return res.status(200).json(new ApiResponse(true, tweets, "User tweets retrieved successfully"))
+    return res.status(200).json(new ApiResponse(200, tweets, "User tweets retrieved successfully"))
 })
 
 const updateTweet = asyncHandler(async (req, res) => {
@@ -39,7 +39,7 @@ const updateTweet = asyncHandler(async (req, res) => {
     if(!tweet) {
         throw new ApiError(404, "Tweet not found")
     }
-    return res.status(200).json(new ApiResponse(true, tweet, "Tweet updated successfully"))
+    return res.status(200).json(new ApiResponse(200, tweet, "Tweet updated successfully"))
 })
 
 const deleteTweet = asyncHandler(async (req, res) => {
@@ -49,13 +49,20 @@ const deleteTweet = asyncHandler(async (req, res) => {
     if(!tweet) {
         throw new ApiError(404, "Tweet not found")
     }
-    return res.status(200).json(new ApiResponse(true, {}, "Tweet deleted successfully"))
+    return res.status(200).json(new ApiResponse(200, {}, "Tweet deleted successfully"))
 })
 
+
+const getAllTweets = asyncHandler(async (req, res) => {
+    // TODO: get all tweets
+    const tweets = await Tweet.find({}).populate("owner", "fullName username avatar")
+    return res.status(200).json(new ApiResponse(200, tweets, "All tweets retrieved successfully"))
+})
 
 export {
     createTweet,
     getUserTweets,
     updateTweet,
-    deleteTweet
+    deleteTweet,
+    getAllTweets
 }

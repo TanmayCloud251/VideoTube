@@ -12,7 +12,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
 
     const videoStats = await Video.aggregate([
         {
-            $mattch: {owner: mongoose.Types.ObjectId(channelId)}
+            $match: {owner: new mongoose.Types.ObjectId(channelId)}
         },
         {
             $group:{
@@ -42,7 +42,7 @@ const getChannelStats = asyncHandler(async (req, res) => {
             totalLikes
         }
 
-    res.status(200).json(new ApiResponse (200, "Stats succesfully collected", stats))
+    res.status(200).json(new ApiResponse (200, stats, "Stats succesfully collected"))
 
 })
 
@@ -52,7 +52,7 @@ const getChannelVideos = asyncHandler(async (req, res) => {
 
     const video = await Video.find({owner: channelId}).sort({createdAt: -1})
 
-    res.stats(200).json(new ApiResponse(200,"Videos fetched successfully", video))
+    res.status(200).json(new ApiResponse(200, video, "Videos fetched successfully"))
 })
 
 export {
