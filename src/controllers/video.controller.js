@@ -4,7 +4,7 @@ import {User} from "../models/user.model.js"
 import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
-import {uploadOnCloudinary, uploadVideoOnCloudinary} from "../utils/cloudinary.js"
+import {uploadOnCloudinary, uploadVideoOnCloudinary, deleteFromCloudinary} from "../utils/cloudinary.js"
 
 
 const getAllVideos = asyncHandler(async (req, res) => {
@@ -127,6 +127,12 @@ const updateVideo = asyncHandler(async (req, res) => {
     if(description) video.description = description
 
     if(req.files?.thumbnail){
+        // Delete old thumbnail
+        if (video.thumbnail) {
+            const publicId = video.thumbnail.split("/").pop().split(".")[0]
+            await deleteFromCloudinary(publicId)
+        }
+        
         const thumbnailPath = req.files.thumbnail[0].path
         const thumbnailUpload = await uploadOnCloudinary(thumbnailPath)
         video.thumbnail = thumbnailUpload?.secure_url
@@ -149,6 +155,16 @@ const deleteVideo = asyncHandler(async (req, res) => {
     
     if(video.owner.toString() !== req.user._id.toString()) {
         throw new ApiError(403, "You are not authorized to delete this video")
+    }
+
+    // Delete files from cloudinary
+    if (video.videoFile) {
+        const videoPublicId = video.videoFile.split("/").pop().split(".")[0]
+        await deleteFromCloudinary(videoPublicId, "video")
+    }
+    if (video.thumbnail) {
+        const thumbnailPublicId = video.thumbnail.split("/").pop().split(".")[0]
+        await deleteFromCloudinary(thumbnailPublicId)
     }
 
     await Video.findByIdAndDelete(videoId)
