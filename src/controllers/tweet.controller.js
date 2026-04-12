@@ -22,7 +22,65 @@ const getUserTweets = asyncHandler(async (req, res) => {
     // TODO: get user tweets
     const { userId } = req.params
     
-    const tweets = await Tweet.find({ owner: userId })
+    if (!isValidObjectId(userId)) {
+        throw new ApiError(400, "Invalid user ID")
+    }
+
+    const tweets = await Tweet.aggregate([
+        {
+            $match: {
+                owner: new mongoose.Types.ObjectId(userId)
+            }
+        },
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        { $unwind: "$owner" },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                likes: 0
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ])
     return res.status(200).json(new ApiResponse(200, tweets, "User tweets retrieved successfully"))
 })
 
@@ -55,7 +113,56 @@ const deleteTweet = asyncHandler(async (req, res) => {
 
 const getAllTweets = asyncHandler(async (req, res) => {
     // TODO: get all tweets
-    const tweets = await Tweet.find({}).populate("owner", "fullName username avatar")
+    const tweets = await Tweet.aggregate([
+        {
+            $lookup: {
+                from: "users",
+                localField: "owner",
+                foreignField: "_id",
+                as: "owner",
+                pipeline: [
+                    {
+                        $project: {
+                            username: 1,
+                            fullName: 1,
+                            avatar: 1
+                        }
+                    }
+                ]
+            }
+        },
+        { $unwind: "$owner" },
+        {
+            $lookup: {
+                from: "likes",
+                localField: "_id",
+                foreignField: "tweet",
+                as: "likes"
+            }
+        },
+        {
+            $addFields: {
+                likesCount: { $size: "$likes" },
+                isLiked: {
+                    $cond: {
+                        if: { $in: [req.user?._id, "$likes.likedBy"] },
+                        then: true,
+                        else: false
+                    }
+                }
+            }
+        },
+        {
+            $project: {
+                likes: 0
+            }
+        },
+        {
+            $sort: {
+                createdAt: -1
+            }
+        }
+    ])
     return res.status(200).json(new ApiResponse(200, tweets, "All tweets retrieved successfully"))
 })
 
