@@ -163,6 +163,18 @@ const getVideoById = asyncHandler(async (req, res) => {
         $inc: { views: 1 }
     })
 
+    // Update watch history of the user
+    if (req.user?._id) {
+        await User.findByIdAndUpdate(
+            req.user._id,
+            {
+                $addToSet: {
+                    watchHistory: videoId
+                }
+            }
+        )
+    }
+
     const video = await Video.aggregate([
         {
             $match: {
