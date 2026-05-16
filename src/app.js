@@ -1,17 +1,32 @@
 import express from "express"
 import cors from "cors"
 import cookieParser from "cookie-parser"
+import helmet from "helmet";
+import compression from "compression";
+import rateLimit from "express-rate-limit";
 import {ApiError} from "./utils/ApiError.js"
 
 const app = express()
+
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100
+});
+
+app.use(limiter);
 
 app.use((req, res, next) => {
     console.log(`${req.method} ${req.url}`);
     next();
 });
 
+app.use(helmet());
+
+app.use(compression());
+
+
 app.use(cors({
-    origin: "http://localhost:3000",
+    origin: process.env.CORS_ORIGIN || "http://localhost:3000",
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
     allowedHeaders: ["Content-Type", "Authorization"]
