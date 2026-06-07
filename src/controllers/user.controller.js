@@ -74,26 +74,39 @@ const registerUser = asyncHandler( async (req, res) => {
         throw new ApiError(400, "Avatar file is required")
     }
    
-
-    const user = await User.create({
-        fullName,
-        avatar: avatar.url,
-        coverImage: coverImage?.url || "",
-        email, 
-        password,
-        username: username.toLowerCase()
-    })
+    let user;
+    try {
+        user = await User.create({
+            fullName,
+            avatar: avatar.url,
+            coverImage: coverImage?.url || "",
+            email, 
+            password,
+            username: username.toLowerCase()
+        })
+    } catch (error) {
+        // CLEANUP: If user creation fails, delete uploaded images from Cloudinary
+        console.log("Database Error - Cleaning up Cloudinary files...");
+        if (avatar?.public_id) {
+            await deleteFromCloudinary(avatar.public_id);
+        }
+        if (coverImage?.public_id) {
+            await deleteFromCloudinary(coverImage.public_id);
+        }
+        
+        throw new ApiError(500, error?.message || "Something went wrong while registering the user in database")
+    }
 
     const createdUser = await User.findById(user._id).select(
         "-password -refreshToken"
     )
 
     if (!createdUser) {
-        throw new ApiError(500, "Something went wrong while registering the user")
+        throw new ApiError(500, "Something went wrong while fetching the created user")
     }
 
     return res.status(201).json(
-        new ApiResponse(200, createdUser, "User registered Successfully")
+        new ApiResponse(201, createdUser, "User registered Successfully")
     )
 
 } )
