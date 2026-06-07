@@ -1,9 +1,10 @@
 # 📺 VideoTube Backend
 
 Backend API for a **video sharing platform** similar to YouTube.
-This project handles **videos, tweets (community posts), comments, likes, playlists, user authentication and channel management**.
 
-Built using **Node.js, Express and MongoDB** with scalable REST API architecture.
+## 🚀 Deployment Links
+- **Live Backend:** [https://videotube-xby8.onrender.com](https://videotube-xby8.onrender.com)
+- **Live Frontend:** [https://video-tube-frontend-git-main-tanmay-mishras-projects-7e4f8817.vercel.app](https://video-tube-frontend-git-main-tanmay-mishras-projects-7e4f8817.vercel.app)
 
 ---
 
